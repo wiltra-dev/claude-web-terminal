@@ -50,10 +50,7 @@
   #shortcut-bar button:active { background: #569cd6; color: #1e1e1e; }
   #shortcut-bar button.accent { background: #264f78; border-color: #569cd6; }
   #shortcut-bar button.active { background: #569cd6; color: #1e1e1e; }
-  #kb-keys, #kb-tabs { display: contents; }
-  #kb-tabs { display: none; }
-  #shortcut-bar.tabs-mode #kb-keys { display: none; }
-  #shortcut-bar.tabs-mode #kb-tabs { display: contents; }
+  #kb-keys { display: contents; }
 
   /* ---- Input Bubble (mobile only) ---- */
   #input-bubble {
@@ -267,22 +264,7 @@
       <button data-action="down">&darr;</button>
       <button data-action="left">&larr;</button>
       <button data-action="right">&rarr;</button>
-      <button data-action="new-session">+</button>
-      <button data-action="prev-tab">&#x25C0;</button>
-      <button data-action="next-tab">&#x25B6;</button>
     </span>
-    <span id="kb-tabs">
-      <button data-stab="1">1</button>
-      <button data-stab="2">2</button>
-      <button data-stab="3">3</button>
-      <button data-stab="4">4</button>
-      <button data-stab="5">5</button>
-      <button data-stab="6">6</button>
-      <button data-stab="7">7</button>
-      <button data-stab="8">8</button>
-      <button data-stab="9">9</button>
-    </span>
-    <button id="kb-swap">&#x2328;</button>
   </div>
 </div>
 
@@ -378,7 +360,6 @@
       currentTab = tabNum;
       updateTab1Button();
       updateDesktopTabs();
-      updateShortcutTabHighlight();
     }
   }
 
@@ -665,72 +646,14 @@
   setupTouchBtn(document.getElementById('btn-enter'), function() { sendInput('\r'); });
 
   // Keyboard mode toggle
-  var kbMode = 'keys';
   var shortcutBar = document.getElementById('shortcut-bar');
-  var kbSwap = document.getElementById('kb-swap');
-
-  function updateShortcutTabHighlight() {
-    document.querySelectorAll('#kb-tabs [data-stab]').forEach(function(b) {
-      b.classList.toggle('active', parseInt(b.getAttribute('data-stab'), 10) === currentTab);
-    });
-  }
-
-  setupTouchBtn(kbSwap, function() {
-    kbMode = kbMode === 'keys' ? 'tabs' : 'keys';
-    shortcutBar.classList.toggle('tabs-mode', kbMode === 'tabs');
-    if (kbMode === 'tabs') updateShortcutTabHighlight();
-  });
-
-  // Session tab buttons in shortcut bar
-  document.querySelectorAll('#kb-tabs [data-stab]').forEach(function(btn) {
-    setupTouchBtn(btn, function() {
-      var n = btn.getAttribute('data-stab');
-      var tabNum = parseInt(n, 10);
-      if (tabNum === 1 && currentTab === 1) {
-        sendInput('cl\r');
-      } else {
-        sendInput('\x1b' + n);
-        currentTab = tabNum;
-      }
-      updateShortcutTabHighlight();
-      updateTab1Button();
-      updateDesktopTabs();
-    });
-  });
 
   // Shortcut bar buttons with repeat-on-hold for arrows
   document.querySelectorAll('#shortcut-bar [data-action]').forEach(function(btn) {
     var action = btn.getAttribute('data-action');
     var isArrow = (action === 'up' || action === 'down' || action === 'left' || action === 'right');
 
-    if (action === 'new-session') {
-      setupTouchBtn(btn, function() {
-        sendInput('\x1b1');
-        currentTab = 1;
-        updateTab1Button();
-        updateDesktopTabs();
-        updateShortcutTabHighlight();
-        setTimeout(function() {
-          sendInput('\x0c');
-          setTimeout(function() { sendInput('cl\r'); }, 100);
-        }, 150);
-      });
-    } else if (action === 'prev-tab' || action === 'next-tab') {
-      setupTouchBtn(btn, function() {
-        if (action === 'prev-tab') {
-          var prev = currentTab > 1 ? currentTab - 1 : 9;
-          sendInput('\x1b' + prev);
-          currentTab = prev;
-        } else {
-          var next = currentTab < 9 ? currentTab + 1 : 1;
-          sendInput('\x1b' + next);
-          currentTab = next;
-        }
-        updateTab1Button();
-        updateDesktopTabs();
-        updateShortcutTabHighlight();
-      });
-    } else if (isArrow) {
+    if (isArrow) {
       var seq = ACTIONS[action];
       var repeatTimer = null;
       btn.addEventListener('touchstart', function(e) {
