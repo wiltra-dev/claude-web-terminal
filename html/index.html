@@ -36,8 +36,14 @@
   #shortcut-bar {
     flex: none;
     display: flex; flex-wrap: nowrap;
-    padding: 2px 3px; gap: 3px;
+    padding: 2px 3px env(safe-area-inset-bottom) 3px; gap: 3px;
     background: #252526; border-top: 1px solid #3c3c3c;
+    /* Smooth jumpiness when keyboard shows/hides */
+    transition: padding-bottom 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+  /* Remove padding if any input is focused */
+  :root:has(input:focus, textarea:focus, [contenteditable]:focus) #shortcut-bar {
+    padding-bottom: 0px;
   }
   #shortcut-bar button {
     flex: 1 1 0; min-width: 32px; height: 30px;
