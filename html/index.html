@@ -298,15 +298,6 @@
     if (!ws || ws.readyState !== WebSocket.OPEN) return;
     ws.send('1' + JSON.stringify({ columns: term.cols, rows: term.rows }));
   }
-
-
-  function syncTitle(title) {
-    document.title = title;
-  }
-
-  // Also catch in-band OSC title changes from tmux (backup sync)
-  term.onTitleChange(function(title) { syncTitle(title); });
-
   function connect() {
     if (ws) {
       ws.onclose = null; ws.onerror = null;
@@ -326,13 +317,11 @@
         var cmd = ev.data[0], body = ev.data.substring(1);
         switch (cmd) {
           case '0': term.write(body); break;
-          case '1': syncTitle(body); break;
         }
       } else {
         var d = new Uint8Array(ev.data), cmd = String.fromCharCode(d[0]), body = d.subarray(1);
         switch (cmd) {
           case '0': term.write(body); break;
-          case '1': syncTitle(new TextDecoder().decode(body)); break;
         }
       }
     };
