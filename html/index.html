@@ -696,8 +696,8 @@
           if (lines !== 0) {
             if (isAltBuffer()) {
               // In alternate buffer (tmux/vim): send arrow keys
-              if (lines > 0) sendScrollUp(Math.abs(lines));
-              else sendScrollDown(Math.abs(lines));
+              if (lines > 0) sendScrollDown(Math.abs(lines));
+              else sendScrollUp(Math.abs(lines));
             } else {
               term.scrollLines(lines);
             }
