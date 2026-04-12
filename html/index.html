@@ -188,7 +188,6 @@
   }
 
   @media (min-width: 769px) {
-    #tab-bar { display: none; }
     #shortcut-bar { display: none; }
     #input-bubble { display: none !important; }
     #desktop-toolbar { display: flex; }
@@ -590,9 +589,6 @@
   // Bubble ^C/Enter tabs
   setupTouchBtn(document.getElementById('btn-interrupt'), function() { sendInput('\x03'); });
   setupTouchBtn(document.getElementById('btn-enter'), function() { sendInput('\r'); });
-
-  // Keyboard mode toggle
-  var shortcutBar = document.getElementById('shortcut-bar');
 
   // Shortcut bar buttons with repeat-on-hold for arrows
   document.querySelectorAll('#shortcut-bar [data-action]').forEach(function(btn) {
