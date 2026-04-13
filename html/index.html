@@ -57,6 +57,16 @@
   #shortcut-bar button.accent { background: #264f78; border-color: #569cd6; }
   #shortcut-bar button.active { background: #569cd6; color: #1e1e1e; }
   #kb-keys { display: contents; }
+  /* Arrow swipe button styling */
+  #btn-arrows { position: relative; overflow: hidden; padding: 0; }
+  #btn-arrows .arrow-icon { position: absolute; font-size: 14px; transition: opacity 0.15s ease; pointer-events: none; }
+  #btn-arrows .arrow-icon.up { top: 2px; left: 50%; transform: translateX(-50%); }
+  #btn-arrows .arrow-icon.down { bottom: 2px; left: 50%; transform: translateX(-50%); }
+  #btn-arrows .arrow-icon.left { left: 4px; top: 50%; transform: translateY(-50%); }
+  #btn-arrows .arrow-icon.right { right: 4px; top: 50%; transform: translateY(-50%); }
+  #btn-arrows:not(.active) .arrow-icon { opacity: 1; }
+  #btn-arrows.active .arrow-icon { opacity: 0.25; }
+  #btn-arrows.active .arrow-icon.active { opacity: 1; }
 
   /* ---- Input Bubble (mobile only) ---- */
   #input-bubble {
@@ -230,10 +240,12 @@
       <button data-action="tab">Tab</button>
       <button data-action="ctrl">Ctrl</button>
       <button data-action="escape">Esc</button>
-      <button data-action="up">&uarr;</button>
-      <button data-action="down">&darr;</button>
-      <button data-action="left">&larr;</button>
-      <button data-action="right">&rarr;</button>
+      <button id="btn-arrows" data-action="arrows">
+        <span class="arrow-icon up">&uarr;</span>
+        <span class="arrow-icon down">&darr;</span>
+        <span class="arrow-icon left">&larr;</span>
+        <span class="arrow-icon right">&rarr;</span>
+      </button>
       <button data-action="shifttab">S+Tab</button>
     </span>
   </div>
@@ -591,31 +603,96 @@
   setupTouchBtn(document.getElementById('btn-interrupt'), function() { sendInput('\x03'); });
   setupTouchBtn(document.getElementById('btn-enter'), function() { sendInput('\r'); });
 
-  // Shortcut bar buttons with repeat-on-hold for arrows
+  // Arrow swipe button handling
+  var arrowBtn = document.getElementById('btn-arrows');
+  var arrowState = { active: false, direction: null, startX: 0, startY: 0 };
+  var arrowRepeatTimer = null;
+
+  function updateArrowVisuals(dir) {
+    arrowBtn.querySelectorAll('.arrow-icon').forEach(function(icon) {
+      icon.classList.remove('active');
+      if (dir === null || dir === icon.classList[1]) {
+        icon.classList.add('active');
+      }
+    });
+  }
+
+  function startArrowRepeat(dir) {
+    stopArrowRepeat();
+    var seq = ACTIONS[dir];
+    if (seq) {
+      sendInput(seq);
+      arrowRepeatTimer = setInterval(function() { sendInput(seq); }, 150);
+    }
+  }
+
+  function stopArrowRepeat() {
+    if (arrowRepeatTimer) { clearInterval(arrowRepeatTimer); arrowRepeatTimer = null; }
+  }
+
+  if (arrowBtn) {
+    arrowBtn.addEventListener('touchstart', function(e) {
+      e.preventDefault();
+      var touch = e.touches[0];
+      arrowState.active = true;
+      arrowState.direction = null;
+      arrowState.startX = touch.clientX;
+      arrowState.startY = touch.clientY;
+      arrowBtn.classList.add('active');
+    }, { passive: false });
+
+    arrowBtn.addEventListener('touchmove', function(e) {
+      if (!arrowState.active) return;
+      e.preventDefault();
+      var touch = e.touches[0];
+      var dx = touch.clientX - arrowState.startX;
+      var dy = touch.clientY - arrowState.startY;
+      var dist = Math.sqrt(dx*dx + dy*dy);
+
+      var newDir = null;
+      if (dist > 20) {
+        if (Math.abs(dx) > Math.abs(dy)) {
+          newDir = dx > 0 ? 'right' : 'left';
+        } else {
+          newDir = dy > 0 ? 'down' : 'up';
+        }
+      }
+
+      if (newDir !== arrowState.direction) {
+        arrowState.direction = newDir;
+        updateArrowVisuals(newDir);
+        if (newDir) {
+          startArrowRepeat(newDir);
+        } else {
+          stopArrowRepeat();
+        }
+      }
+    }, { passive: false });
+
+    arrowBtn.addEventListener('touchend', function(e) {
+      e.preventDefault();
+      arrowState.active = false;
+      arrowState.direction = null;
+      arrowBtn.classList.remove('active');
+      updateArrowVisuals(null);
+      stopArrowRepeat();
+    });
+
+    arrowBtn.addEventListener('touchcancel', function() {
+      arrowState.active = false;
+      arrowState.direction = null;
+      arrowBtn.classList.remove('active');
+      updateArrowVisuals(null);
+      stopArrowRepeat();
+    });
+  }
+
+  // Shortcut bar buttons (non-arrow)
   document.querySelectorAll('#shortcut-bar [data-action]').forEach(function(btn) {
     var action = btn.getAttribute('data-action');
-    var isArrow = (action === 'up' || action === 'down' || action === 'left' || action === 'right');
+    if (action === 'arrows') return; // handled above
 
-    if (isArrow) {
-      var seq = ACTIONS[action];
-      var repeatTimer = null;
-      btn.addEventListener('touchstart', function(e) {
-        e.preventDefault();
-        sendInput(seq);
-        repeatTimer = setInterval(function() { sendInput(seq); }, 150);
-      });
-      btn.addEventListener('touchend', function(e) {
-        e.preventDefault();
-        if (repeatTimer) { clearInterval(repeatTimer); repeatTimer = null; }
-      });
-      btn.addEventListener('touchcancel', function() {
-        if (repeatTimer) { clearInterval(repeatTimer); repeatTimer = null; }
-      });
-      btn.addEventListener('click', function(e) {
-        e.preventDefault();
-        sendInput(seq);
-      });
-    } else if (action === 'ctrl') {
+    if (action === 'ctrl') {
       btn.addEventListener('touchstart', function(e) {
         e.preventDefault();
         ctrlState = true;
