@@ -246,6 +246,8 @@
         <span class="arrow-icon left">&larr;</span>
         <span class="arrow-icon right">&rarr;</span>
       </button>
+      <button data-action="tmux_prev">&#x25c0;</button>
+      <button data-action="tmux_next">&#x25b6;</button>
       <button data-action="shifttab">S+Tab</button>
     </span>
   </div>
@@ -268,7 +270,8 @@
     'tab':     '\x09', 'enter':     '\r',   'clear': '\x0c',
     'up':      '\x1b[A', 'down':  '\x1b[B',
     'left':    '\x1b[D', 'right': '\x1b[C',
-    'shifttab':'\x1b[Z'
+    'shifttab':'\x1b[Z',
+    'tmux_prev': '\x02p', 'tmux_next': '\x02n'
   };
 
   // ---- Responsive Font Size ----
